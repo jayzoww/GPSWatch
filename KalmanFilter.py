@@ -78,12 +78,9 @@ class Calculator:
  
 if __name__ == '__main__':
   try:
-    # with open('stationary1.json') as data_file:
-    #   data = json.load(data_file)
-    #   print data['lat']
-    #   lat = data['lat']
-    #   lon = data['lon']
-    #   print lat[1]
+    mode = int(raw_input('Enter Mode (1:Walk / 2:Run / 3:Bike):'))
+    if mode
+  try:
     refresh_time = 0.1
     vLat = []
     vLon = []
