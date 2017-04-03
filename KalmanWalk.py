@@ -3,6 +3,7 @@ import math
 import random
 import numpy
 import json
+import csv
 import os
 from gps import *
 from time import *
@@ -46,13 +47,13 @@ class Calculator:
       # LonSpeed = speed / 79300
     self.Velocities = numpy.matrix([0,0])
 
-    print 'Delta Latitude: ', deltaLat
-    print 'Delta Longitude: ', deltaLon
+   # print 'Delta Latitude: ', deltaLat
+   # print 'Delta Longitude: ', deltaLon
 
         #inverse tan of lat/lon (opp/adj) to obtain heading angle
     if (deltaLat != 0 and deltaLon != 0):
       angle = math.atan(deltaLat/deltaLon)
-      print 'angle: ' , angle
+      #print 'angle: ' , angle
       #multilply speed by sin and cos angle to obtain vectors
       self.Velocities[0,0] = float(math.sin(angle)*speed/111000)
       self.Velocities[0,1] = float(math.sin(angle)*speed/79300)
@@ -71,7 +72,7 @@ class Calculator:
 
   def getVelocity(self): 
 
-    print self.Velocities
+   # print self.Velocities
     return self.Velocities
 
  
@@ -91,7 +92,7 @@ if __name__ == '__main__':
     kLat = []
     kLon = []
 
-    with open('RunQC-Home.json') as data_file:
+    with open('DriveVicParkSq.json') as data_file:
       data = json.load(data_file)
       lat, lon, speed, errorLat, errorLon = zip(*data)
 
@@ -138,7 +139,7 @@ if __name__ == '__main__':
     initial_state = numpy.matrix([[lat[0]], [vLat[0]], [lon[0]], [vLon[0]]])
 
     initial_prob = numpy.eye(4)
-    process_covariance = numpy.eye(4) * 1
+    process_covariance = numpy.eye(4) * 0.1
     measurement_covariance = numpy.eye(4) * 0
 
     kf = KalmanFilter(state_transition_matrix, control_matrix, observation_matrix, initial_state, initial_prob, process_covariance, measurement_covariance)
@@ -167,8 +168,13 @@ if __name__ == '__main__':
       #  print lat[i]
       #  print lon[i]
 
-
-    
+    with open('KalmanOutputVicPark.csv', 'w') as csvfile:
+      fieldnames = ['latitude', 'longitude']
+      writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+      writer.writeheader()
+      for i in xrange(0, len(kLat)):
+        writer.writerow({'latitude': kLat[i], 'longitude': kLon[i]})
+      
     pylab.scatter (lon, lat)
     pylab.plot (kLon, kLat, '--')
 

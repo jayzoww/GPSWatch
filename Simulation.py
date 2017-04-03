@@ -93,7 +93,7 @@ class Sim:
 
 timeslice = 0.1 # How many seconds should elapse per iteration?
 iterations = 350 # How many iterations should the simulation run for?
-noiselevel = 20  # How much noise should we add to the noisy measurements?
+noiselevel = 5  # How much noise should we add to the noisy measurements?
 initialVel = 10 # 
 angle = 90
 
@@ -145,7 +145,7 @@ initial_state = numpy.matrix([[0],[speedX],[0],[speedY]])
 initial_probability = numpy.eye(4)
 
 process_covariance = numpy.eye(4) * 0.001
-measurement_covariance = numpy.eye(4)*2
+measurement_covariance = numpy.eye(4)*0.5
 
 kf = KalmanFilter(state_transition, control_matrix, observation_matrix, initial_state, initial_probability, process_covariance, measurement_covariance)
 
