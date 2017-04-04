@@ -77,9 +77,20 @@ class Calculator:
 
  
 if __name__ == '__main__':
-  try:
-    mode = int(raw_input('Enter Mode (1:Walk / 2:Run / 3:Bike):'))
-    if mode
+  #Get user to input mode
+  while 1:
+    try:
+      mode = int(raw_input('Enter Mode (1:Walk | 2:Run | 3:Bike):'))
+      if (mode == 1 or mode == 2 or mode == 3):
+        print mode
+        break
+      else:
+        print 'Please enter a valid mode (1:Walk | 2:Run | 3:Bike):'
+    except ValueError:
+      print 'Please enter a valid mode (1:Walk | 2:Run | 3:Bike):'
+      continue
+
+
   try:
     refresh_time = 0.1
     vLat = []
@@ -88,11 +99,11 @@ if __name__ == '__main__':
     aLon = [] 
     kLat = []
     kLon = []
-
+    #Extract data from json file
     with open('DriveVicParkSq.json') as data_file:
       data = json.load(data_file)
       lat, lon, speed, errorLat, errorLon = zip(*data)
-
+      #Populate acceleration and velocity lists
       for i in xrange(0, len(lat)):
         if (i == 0):
           vLat.append(i)
@@ -102,9 +113,10 @@ if __name__ == '__main__':
         else:
           deltaLat = lat[i] - lat[i-1]
           deltaLon = lon[i] - lon[i-1]
+          #Init speed calculation class
           calc = Calculator(deltaLat, deltaLon, speed[i])
           
-          #print type(speed[i])
+          #populate speed and acceleartion lists
           vLat.append(calc.getVelocity()[0,0])   
           vLon.append(calc.getVelocity()[0,1]) 
           # print 'Speed ', speed[i]
@@ -134,9 +146,16 @@ if __name__ == '__main__':
     observation_matrix = numpy.eye(4)
     #initialize state with first readings
     initial_state = numpy.matrix([[lat[0]], [vLat[0]], [lon[0]], [vLon[0]]])
-
+    #Assume first measurement to be accurate
     initial_prob = numpy.eye(4)
-    process_covariance = numpy.eye(4) * 0.1
+    #Choose covariance by mode (1: Walk 2: Run 3: Cycle)
+    if (mode == 1):
+      process_covariance = numpy.eye(4) * 0.5
+    elif (mode == 2):
+      process_covariance = numpy.eye(4) * 0.3
+    elif (mode == 3):
+      process_covariance = numpy.eye(4) * 0.007
+
     measurement_covariance = numpy.eye(4) * 0
 
     kf = KalmanFilter(state_transition_matrix, control_matrix, observation_matrix, initial_state, initial_prob, process_covariance, measurement_covariance)
@@ -154,7 +173,7 @@ if __name__ == '__main__':
       # accelLon = aLon[j]
 
       #adjust measurement error based on average lat/lon error / 10
-      error = ((errorLat[i] + errorLon[i])/2)/10
+      error = ((errorLat[i] + errorLon[i])/2)/5
       control_vector = numpy.matrix([[0.5*aLat[j]*refresh_time*refresh_time], [aLat[j]*refresh_time], [0.5*aLon[j]*refresh_time*refresh_time], [aLon[j]*refresh_time]])
       kLat.append(kf.GetCurrentState()[0,0])
       kLon.append(kf.GetCurrentState()[2,0])
