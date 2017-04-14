@@ -173,7 +173,7 @@ if __name__ == '__main__':
       # accelLon = aLon[j]
 
       #adjust measurement error based on average lat/lon error / 10
-      error = ((errorLat[i] + errorLon[i])/2)/5
+      error = ((errorLat[i] + errorLon[i])/2)/10
       control_vector = numpy.matrix([[0.5*aLat[j]*refresh_time*refresh_time], [aLat[j]*refresh_time], [0.5*aLon[j]*refresh_time*refresh_time], [aLon[j]*refresh_time]])
       kLat.append(kf.GetCurrentState()[0,0])
       kLon.append(kf.GetCurrentState()[2,0])
@@ -204,5 +204,3 @@ if __name__ == '__main__':
     print "\nKilling Thread..."
 
   print "Done.\nExiting." 
-
- 

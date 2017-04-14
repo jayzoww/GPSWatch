@@ -10,7 +10,25 @@ import time
 import threading
 import signal
 
+#global
+global mode
+global initialVel
+global noiselevel
  
+while 1:
+  try:
+    mode = int(raw_input('Enter Mode (1:Walk | 2:Run | 3:Bike):'))
+    initialVel = mode*10/2
+    noiselevel = mode
+    #print initialVel
+    if (mode == 1 or mode == 2 or mode == 3):
+      #print mode
+      break
+    else:
+      print 'Please enter a valid mode (1:Walk | 2:Run | 3:Bike):'
+  except ValueError:
+    print 'Please enter a valid mode (1:Walk | 2:Run | 3:Bike):'
+    continue
 #os.system('clear') #clear the terminal (optional)
 class KalmanFilter: 
   def __init__(self, _A, _B, _H, _x, _P, _Q, _R):
@@ -45,7 +63,7 @@ class KalmanFilter:
 class Sim:
   #--------------------------------VARIABLES----------------------------------
   
-  initialVel = 10 
+  #initialVel = 10 
   accel = [0,0]
   #initial velocity components
   initialAngle = 90
@@ -91,10 +109,10 @@ class Sim:
 
 
 
-timeslice = 0.1 # How many seconds should elapse per iteration?
-iterations = 350 # How many iterations should the simulation run for?
-noiselevel = 5  # How much noise should we add to the noisy measurements?
-initialVel = 10 # 
+timeslice = 0.1 #
+iterations = 350 # Number of iterations
+#noiselevel = 3  # Noise added to measurements
+#initialVel = 10 # 
 angle = 90
 
 speedX = initialVel*math.cos(angle*math.pi/180)
@@ -106,53 +124,37 @@ nx = []
 ny = []
 kx = []
 ky = []
+errx = []
+erry = []
+errKalmanx = []
+errKalmany = []
 
-# Let's make a cannon simulation.
+# Call simulation.
 c = Sim(timeslice,noiselevel)
 
-
-# This is the state transition vector, which represents part of the kinematics.
-# 1, ts, 0,  0  =>  x(n+1) = x(n) + vx(n)
-# 0,  1, 0,  0  => vx(n+1) =        vx(n)
-# 0,  0, 1, ts  =>  y(n+1) =              y(n) + vy(n)
-# 0,  0, 0,  1  => vy(n+1) =                     vy(n)
-# Remember, acceleration gets added to these at the control vector.
+#Initialize Values for Kalman Filter
 state_transition = numpy.matrix([[1,timeslice,0,0],[0,1,0,0],[0,0,1,timeslice],[0,0,0,1]])
-
 control_matrix = numpy.matrix([[0,0,0,0],[0,0,0,0],[0,0,1,0],[0,0,0,1]])
-# The control vector, which adds acceleration to the kinematic equations.
-# 0          =>  x(n+1) =  x(n+1)
-# 0          => vx(n+1) = vx(n+1)
-# -9.81*ts^2 =>  y(n+1) =  y(n+1) + 0.5*-9.81*ts^2
-# -9.81*ts   => vy(n+1) = vy(n+1) + -9.81*ts
 control_vector = numpy.matrix([[0],[0],[0],[0]])
-
-# After state transition and control, here are the equations:
-#  x(n+1) = x(n) + vx(n)
-# vx(n+1) = vx(n)
-#  y(n+1) = y(n) + vy(n) - 0.5*9.81*ts^2
-# vy(n+1) = vy(n) + -9.81*ts
-# Which, if you recall, are the equations of motion for a parabola.  Perfect.
-
-# Observation matrix is the identity matrix, since we can get direct
-# measurements of all values in our example.
 observation_matrix = numpy.eye(4)
-
-# This is our guess of the initial state.  I intentionally set the Y value
-# wrong to illustrate how fast the Kalman filter will pick up on that.
 initial_state = numpy.matrix([[0],[speedX],[0],[speedY]])
-
 initial_probability = numpy.eye(4)
+measurement_covariance = numpy.eye(4)*mode
 
-process_covariance = numpy.eye(4) * 0.001
-measurement_covariance = numpy.eye(4)*0.5
+#Set process covariances for mode
+if (mode == 1):
+  process_covariance = numpy.eye(4) * 0.24
+elif (mode == 2):
+  process_covariance = numpy.eye(4) * 0.18
+elif (mode == 3):
+  process_covariance = numpy.eye(4) * 0.052
 
 kf = KalmanFilter(state_transition, control_matrix, observation_matrix, initial_state, initial_probability, process_covariance, measurement_covariance)
 
 # Iterate through the simulation.
 for i in range(iterations):
     if (i<100):
-      angle = 90 # Angle from the ground.
+      angle = 90 
     elif(i<200 and i>100):
       angle = 0
     else: 
@@ -167,11 +169,31 @@ for i in range(iterations):
     newestY = c.GetYWithNoise()
     nx.append(newestX)
     ny.append(newestY)
-    # Iterate the cannon simulation to the next timeslice.
     c.Step(angle)
     kx.append(kf.GetCurrentState()[0,0])
     ky.append(kf.GetCurrentState()[2,0])
     kf.Step(control_vector,numpy.matrix([[newestX],[c.GetXVelocity()],[newestY],[c.GetYVelocity()]]))
+
+ # Show error in measurements
+for k in range(iterations):
+  errx.append(abs(nx[k] - x[k]))
+  erry.append(abs(ny[k] - y[k]))
+  errKalmanx.append(abs(kx[k] - x[k]))
+  errKalmany.append(abs(ky[k] - y[k]))
+  #print 'Measurement Error:', errx[k], erry[k]
+  #print 'Kalman Error:', errKalmanx[k], errKalmany[k]
+
+
+avgXErr = sum(errx)/float(len(errx))
+avgYErr = sum(erry)/float(len(erry))
+avgKalmanXErr = sum(errKalmanx)/float(len(errKalmanx))
+avgKalmanYErr = sum(errKalmany)/float(len(errKalmany))
+improveX = avgXErr / avgKalmanXErr
+improveY = avgYErr / avgKalmanYErr
+
+print 'Error in Measurements: ', avgXErr, avgYErr
+print 'Error in Kalman: ', avgKalmanXErr, avgKalmanYErr
+print 'Improvement in Error: ', improveX, improveY, '\nAvg improvement', (improveX+improveY)/2
 
 # Plot all the results we got.
 pylab.plot(x,y,'-',nx,ny,':',kx,ky,'--')
