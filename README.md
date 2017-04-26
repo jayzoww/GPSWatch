@@ -1,7 +1,7 @@
 # GPSWatch
-ELEC490 GPS Project
+4th Year Cumulative Project
 
-This project is essentially a Kalman Filter that acquires data from GPS units. 
+This project implements a [Kalman Filter](https://en.wikipedia.org/wiki/Kalman_filter) that acquires data from GPS units. 
 
 To get a feel for the filter, run Simulation.py and change desired noise level and mode
 
