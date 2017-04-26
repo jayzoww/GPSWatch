@@ -1,7 +1,7 @@
 # GPSWatch
 4th Year Cumulative Project
 
-This project implements a [Kalman Filter](https://en.wikipedia.org/wiki/Kalman_filter) that acquires data from GPS units. 
+This project implements a [Kalman Filter](https://en.wikipedia.org/wiki/Kalman_filter) that acquires data from GPS units using [GPSD](http://www.catb.org/gpsd/). 
 
 To get a feel for the filter, run Simulation.py and change desired noise level and mode
 
